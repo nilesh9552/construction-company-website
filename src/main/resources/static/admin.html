@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel | Vighnaharta Construction & Interiors</title>
+  <link rel="stylesheet" href="/css/styles.css?v=20260610-1" />
+</head>
+<body>
+  <header class="hero compact">
+    <div class="nav-shell">
+      <nav class="nav container" aria-label="Primary navigation">
+        <a class="brand" href="/">Vighnaharta Construction & Interiors</a>
+        <button class="nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks">☰</button>
+        <div id="navLinks" class="nav-links">
+          <a class="nav-link" href="/">Home</a>
+          <a class="nav-link active" href="/admin.html">Admin</a>
+          <a class="button nav-cta" href="#projectForm">Add Project</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container section">
+    <section class="card reveal">
+      <p class="eyebrow">CRM Dashboard</p>
+      <h1>Construction company admin dashboard</h1>
+      <p class="lead">Manage leads, projects, services, testimonials, site visits, content, and client communication from one place.</p>
+    </section>
+
+    <section class="grid cards section" id="dashboardCards"></section>
+
+    <section class="grid admin-grid section">
+      <article class="card reveal">
+        <h2>Lead Management</h2>
+        <form id="leadForm" class="stack">
+          <input type="text" name="name" placeholder="Client name" required />
+          <input type="tel" name="phone" placeholder="Phone" required />
+          <input type="text" name="location" placeholder="Location" />
+          <input type="text" name="budget" placeholder="Budget" />
+          <textarea name="message" placeholder="Client message" required></textarea>
+          <select name="status"><option>New</option><option>Contacted</option><option>Meeting Scheduled</option><option>Quotation Sent</option><option>Closed</option></select>
+          <button class="button primary" type="submit">Save Lead</button>
+        </form>
+        <div id="leadList" class="stack"></div>
+      </article>
+
+      <article class="card reveal">
+        <h2>Project Management</h2>
+        <form id="projectForm" class="stack">
+          <input type="text" name="title" placeholder="Project title" required />
+          <input type="text" name="category" placeholder="Category" required />
+          <textarea name="description" placeholder="Project description" required></textarea>
+          <input type="text" name="location" placeholder="Location" />
+          <input type="text" name="budget" placeholder="Budget" />
+          <input type="text" name="timeline" placeholder="Timeline" />
+          <input type="text" name="videoUrl" placeholder="Video URL (optional)" />
+          <label>Before photo<input type="file" name="beforeImage" accept="image/*" /></label>
+          <label>After photo<input type="file" name="afterImage" accept="image/*" /></label>
+          <button class="button primary" type="submit">Save Project</button>
+        </form>
+        <p id="statusMessage" class="muted"></p>
+        <div id="adminList" class="stack"></div>
+      </article>
+    </section>
+
+    <section class="grid admin-grid section">
+      <article class="card reveal">
+        <h2>Media Management</h2>
+        <div class="stack">
+          <label>Upload images<input type="file" multiple /></label>
+          <label>Upload videos<input type="file" multiple /></label>
+          <label>Hero background image for homepage<input id="heroBackgroundInput" type="file" accept="image/*" /></label>
+          <button id="heroBackgroundUpload" class="button primary" type="button">Apply background image</button>
+          <p id="heroBackgroundStatus" class="muted">Select a photo to change the homepage hero banner for all users.</p>
+          <div class="hero-preview card">
+            <p class="eyebrow">Current hero image</p>
+            <img id="currentHeroPreview" alt="Current hero background preview" hidden />
+            <p id="heroPreviewStatus" class="muted">No hero image selected yet.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <h2>Services Management</h2>
+        <form id="serviceForm" class="stack">
+          <input type="text" id="serviceName" placeholder="Service name" required />
+          <textarea id="serviceDesc" placeholder="Service description" required></textarea>
+          <button class="button primary" type="submit">Add Service</button>
+        </form>
+        <div id="serviceList" class="stack"></div>
+      </article>
+    </section>
+
+    <section class="grid admin-grid section">
+      <article class="card reveal">
+        <h2>Testimonials Management</h2>
+        <form id="testimonialForm" class="stack">
+          <input type="text" id="reviewName" placeholder="Client name" required />
+          <textarea id="reviewText" placeholder="Review text" required></textarea>
+          <input type="text" id="reviewVideo" placeholder="Video URL (optional)" />
+          <button class="button primary" type="submit">Add Review</button>
+        </form>
+        <div id="testimonialList" class="stack"></div>
+      </article>
+
+      <article class="card reveal">
+        <h2>Contact Management</h2>
+        <form id="contactForm" class="stack">
+          <input type="tel" id="contactPhone" placeholder="Phone number" />
+          <input type="email" id="contactEmail" placeholder="Email" />
+          <input type="text" id="contactAddress" placeholder="Office address" />
+          <input type="text" id="contactMap" placeholder="Maps link" />
+          <button class="button primary" type="submit">Save Contact Info</button>
+        </form>
+        <div id="contactPreview" class="muted"></div>
+      </article>
+    </section>
+
+    <section class="grid admin-grid section">
+      <article class="card reveal">
+        <h2>Site Visit Management</h2>
+        <form id="visitForm" class="stack">
+          <input type="text" id="visitClient" placeholder="Client name" required />
+          <input type="date" id="visitDate" required />
+          <input type="time" id="visitTime" required />
+          <textarea id="visitMessage" placeholder="Site visit notes" required></textarea>
+          <button class="button primary" type="submit">Add Booking</button>
+        </form>
+        <div id="visitList" class="stack"></div>
+      </article>
+
+      <article class="card reveal">
+        <h2>Content Management</h2>
+        <form id="contentForm" class="stack">
+          <textarea id="homepageContent" placeholder="Homepage content"></textarea>
+          <textarea id="aboutContent" placeholder="About page content"></textarea>
+          <textarea id="heroText" placeholder="Hero text"></textarea>
+          <textarea id="ctaText" placeholder="CTA text"></textarea>
+          <button class="button primary" type="submit">Save Content</button>
+        </form>
+        <div id="contentPreview" class="muted"></div>
+      </article>
+    </section>
+  </main>
+
+  <script src="/js/admin.js?v=20260610-1"></script>
+  <script src="/js/nav.js?v=20260610-1"></script>
+</body>
+</html>

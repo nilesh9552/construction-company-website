@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cost Estimator | Vighnaharta Construction & Interiors</title>
+  <meta name="description" content="Get a simple cost estimate by entering plot size, floors, and material quality." />
+  <link rel="stylesheet" href="/css/styles.css?v=20260610-2" />
+</head>
+<body>
+  <div class="nav-shell"><nav class="nav container" aria-label="Primary navigation"><a class="brand" href="/">Vighnaharta Construction & Interiors</a><button class="nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks">☰</button><div id="navLinks" class="nav-links"><a class="nav-link" href="/">Home</a><a class="nav-link" href="/about.html">About</a><a class="nav-link" href="/services.html">Services</a><a class="nav-link active" href="/estimate.html">Estimate</a><a class="nav-link" href="/contact.html">Contact</a><a class="button nav-cta" href="/admin.html">Admin Panel</a></div></nav></div>
+  <main class="container section">
+    <section class="card reveal"><p class="eyebrow">Cost Estimator</p><h1>Get a quick project estimate</h1><p class="lead">Enter your plot size, floors, and material choice to see an estimated cost.</p></section>
+    <section class="card reveal section">
+      <form id="estimateForm" class="stack">
+        <label>Plot size (sq. ft.)<input type="number" id="plotSize" value="1200" /></label>
+        <label>Floors<input type="number" id="floors" value="2" min="1" max="4" /></label>
+        <label>Material quality<select id="quality"><option value="standard">Standard</option><option value="premium">Premium</option><option value="luxury">Luxury</option></select></label>
+        <button class="button primary" type="button" onclick="calculateEstimate()">Show Estimate</button>
+        <p id="estimateResult" class="muted"></p>
+      </form>
+    </section>
+  </main>
+  <footer class="footer"><div class="container footer-inner"><p>© 2026 Vighnaharta Construction & Interiors.</p><a href="/contact.html">Contact us</a></div></footer>
+  <a class="floating-button" href="https://wa.me/919000000000" target="_blank" rel="noreferrer">💬</a>
+  <a class="floating-button call" href="tel:+919000000000">📞</a>
+  <script>
+    function calculateEstimate() {
+      const plotSize = Number(document.getElementById('plotSize').value || 0);
+      const floors = Number(document.getElementById('floors').value || 1);
+      const quality = document.getElementById('quality').value;
+      const rateMap = { standard: 1800, premium: 2400, luxury: 3200 };
+      const estimate = plotSize * floors * rateMap[quality];
+      document.getElementById('estimateResult').textContent = `Estimated cost: ₹${estimate.toLocaleString('en-IN')} for ${floors} floor(s) with ${quality} materials.`;
+    }
+  </script>
+  <script src="/js/nav.js?v=20260610-2"></script>
+</body>
+</html>
