@@ -2,6 +2,7 @@ package com.example.construction.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,9 +12,10 @@ import java.util.UUID;
 
 @Service
 public class StorageService {
-    private final Path uploadDir = Paths.get("uploads");
+    private final Path uploadDir;
 
-    public StorageService() {
+    public StorageService(@Value("${app.upload-dir:uploads}") String uploadDirPath) {
+        this.uploadDir = Paths.get(uploadDirPath).toAbsolutePath().normalize();
         try {
             Files.createDirectories(uploadDir);
         } catch (IOException e) {

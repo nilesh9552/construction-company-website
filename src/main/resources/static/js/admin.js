@@ -115,16 +115,30 @@ async function loadAdminItems() {
       <p class="muted">${item.location ? `Location: ${item.location}` : ''}${item.budget ? ` • Budget: ${item.budget}` : ''}${item.timeline ? ` • Timeline: ${item.timeline}` : ''}</p>
       <div class="grid">${item.beforeImage ? `<img src="${item.beforeImage}" alt="Before image" />` : ''}${item.afterImage ? `<img src="${item.afterImage}" alt="After image" />` : ''}</div>
       ${item.videoUrl ? `<p><a class="button" href="${item.videoUrl}" target="_blank">Open video</a></p>` : ''}
-      <button class="button" onclick="removeLocalProject('${item.id || item.title}')">Delete</button>
+      <button class="button" onclick="deleteProject('${item.id || item.title}')">Delete</button>
     </article>
   `).join('') : '<p class="muted">No project entries yet.</p>';
   renderDashboard();
 }
 
-function removeLocalProject(id) {
-  const localItems = getLocal(STORAGE_KEYS.projects).filter(item => String(item.id || item.title) !== String(id));
+async function deleteProject(id) {
+  const projectId = String(id);
+  const localItems = getLocal(STORAGE_KEYS.projects).filter(item => String(item.id || item.title) !== projectId);
   saveLocal(STORAGE_KEYS.projects, localItems);
-  loadAdminItems();
+
+  const numericId = Number(projectId);
+  if (Number.isFinite(numericId) && String(numericId) === projectId) {
+    try {
+      const response = await fetch(`/api/projects/${numericId}`, { method: 'DELETE' });
+      if (!response.ok && response.status !== 404) {
+        throw new Error('Delete failed');
+      }
+    } catch (error) {
+      status.textContent = 'Project removed from local cache, but server delete failed.';
+    }
+  }
+
+  await loadAdminItems();
 }
 
 function renderServices() {

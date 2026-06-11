@@ -32,6 +32,16 @@ public class ProjectController {
         return repository.findAll();
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        if (!repository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        repository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/hero-background")
     public ResponseEntity<Map<String, String>> getHeroBackground() {
         return ResponseEntity.ok(Map.of("imageUrl", heroBackgroundService.getHeroBackgroundUrl()));
