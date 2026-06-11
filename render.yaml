@@ -1,19 +1,11 @@
 services:
   - type: web
     name: construction-company-website
-    env: java
-    plan: starter
+    runtime: docker
+    plan: free
     buildCommand: mvn clean package -DskipTests
     startCommand: java -jar target/construction-company-website-1.0.0.jar
     autoDeploy: true
-    disk:
-      name: construction-company-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: JAVA_VERSION
         value: 17
-      - key: APP_UPLOAD_DIR
-        value: /var/data/uploads
-      - key: SPRING_DATASOURCE_URL
-        value: jdbc:h2:file:/var/data/constructiondb;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE
