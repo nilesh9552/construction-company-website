@@ -162,6 +162,22 @@ function renderContacts() {
   contactPreview.textContent = `Phone: ${contacts.phone || ''} • Email: ${contacts.email || ''} • Address: ${contacts.address || ''}`;
 }
 
+async function loadContactsFromAPI() {
+  try {
+    const response = await fetch('/api/contact');
+    if (!response.ok) return;
+    const data = await response.json();
+    // Update form fields with API data
+    document.getElementById('contactPhone').value = data.phone || '+91 90000 00000';
+    document.getElementById('contactEmail').value = data.email || 'hello@yourcompany.com';
+    document.getElementById('contactAddress').value = data.address || 'Pune, Maharashtra';
+    document.getElementById('contactMap').value = data.mapUrl || 'https://maps.google.com/';
+    renderContacts();
+  } catch (error) {
+    console.log('Using default contact info');
+  }
+}
+
 function renderVisits() {
   const visits = getLocal(STORAGE_KEYS.visits);
   visitList.innerHTML = visits.map(item => `<article class="card"><h3>${item.client}</h3><p>${item.date} ${item.time}</p><p>${item.message}</p><p class="muted">Status: ${item.status}</p><div class="cta-row"><button class="button" onclick="changeVisitStatus(${item.id}, 'Accepted')">Accept</button><button class="button" onclick="changeVisitStatus(${item.id}, 'Rejected')">Reject</button><button class="button" onclick="changeVisitStatus(${item.id}, 'Completed')">Complete</button></div></article>`).join('');
@@ -257,7 +273,7 @@ renderDashboard();
 renderLeads();
 renderServices();
 renderTestimonials();
-renderContacts();
+loadContactsFromAPI();
 renderVisits();
 renderContent();
 loadAdminItems();
@@ -309,15 +325,35 @@ testimonialForm?.addEventListener('submit', (event) => {
   renderTestimonials();
 });
 
-contactForm?.addEventListener('submit', (event) => {
+contactForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
-  saveLocal(STORAGE_KEYS.contacts, {
+  const contactData = {
     phone: document.getElementById('contactPhone').value || '+91 90000 00000',
     email: document.getElementById('contactEmail').value || 'hello@yourcompany.com',
     address: document.getElementById('contactAddress').value || 'Pune, Maharashtra',
-    map: document.getElementById('contactMap').value || 'https://maps.google.com/'
-  });
-  renderContacts();
+    mapUrl: document.getElementById('contactMap').value || 'https://maps.google.com/'
+  };
+  
+  try {
+    const response = await fetch('/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(contactData)
+    });
+    
+    if (response.ok) {
+      saveLocal(STORAGE_KEYS.contacts, contactData);
+      renderContacts();
+      alert('Contact information updated successfully!');
+    } else {
+      throw new Error('Failed to save');
+    }
+  } catch (error) {
+    console.error('Error saving contact:', error);
+    alert('Error saving contact information');
+  }
 });
 
 visitForm?.addEventListener('submit', (event) => {
