@@ -72,14 +72,14 @@ h1 { font-family: 'Baloo 2', 'Noto Sans Devanagari', sans-serif; font-size: clam
 .animated-band { animation: floatIn 1s ease both; }
 .quote-card .card { background: linear-gradient(135deg, #ffffff, #f8fbff); border-color: rgba(245,158,11,.25); }
 .mini-stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-top:.75rem; }
-.mini-stat { background: rgba(56,189,248,.08); border:1px solid rgba(56,189,248,.18); border-radius:14px; padding:.75rem; }
+.mini-stat { background: rgba(0, 115, 255, 0.08); border:1px solid rgba(0, 0, 0, 0.18); border-radius:14px; padding:.75rem; }
 .feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .trust-hero { padding: 1rem; border-radius: 24px; background: linear-gradient(135deg, #ffffff, #f8fbff); border: 1px solid var(--line); box-shadow: var(--shadow); }
 .trust-badge { display:inline-flex; align-items:center; gap:.45rem; padding:.45rem .7rem; border-radius:999px; background: rgba(15,118,110,0.10); border:1px solid rgba(15,118,110,0.20); color: #000000; font-size:.9rem; }
 .trust-card { border-color: rgba(245,158,11,.18); position: relative; overflow: hidden; }
 .trust-card::after { content:""; position:absolute; inset:auto -30% -35% auto; width:120px; height:120px; border-radius:50%; background: radial-gradient(circle, rgba(217,119,6,0.18), transparent 55%); }
 .trust-card h3 { margin-top:0; color: var(--text); }
-.mini-stat strong { display:block; font-size:1.2rem; color:#fff; }
+.mini-stat strong { display:block; font-size:1.2rem; color:#171717; }
 .mini-stat span { color: var(--muted); font-size:.9rem; }
 .section-head { display:flex; justify-content:space-between; gap:1rem; align-items:end; margin-bottom:1rem; }
 .grid { display:grid; gap:1rem; }
