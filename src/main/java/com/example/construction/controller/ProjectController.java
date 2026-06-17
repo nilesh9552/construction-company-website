@@ -4,6 +4,7 @@ import com.example.construction.model.ProjectItem;
 import com.example.construction.repository.ProjectItemRepository;
 import com.example.construction.service.HeroBackgroundService;
 import com.example.construction.service.StorageService;
+import com.example.construction.service.S3StorageService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,11 +20,13 @@ public class ProjectController {
 
     private final ProjectItemRepository repository;
     private final StorageService storageService;
+    private final S3StorageService s3StorageService;
     private final HeroBackgroundService heroBackgroundService;
 
-    public ProjectController(ProjectItemRepository repository, StorageService storageService, HeroBackgroundService heroBackgroundService) {
+    public ProjectController(ProjectItemRepository repository, StorageService storageService, S3StorageService s3StorageService, HeroBackgroundService heroBackgroundService) {
         this.repository = repository;
         this.storageService = storageService;
+        this.s3StorageService = s3StorageService;
         this.heroBackgroundService = heroBackgroundService;
     }
 
@@ -53,7 +56,7 @@ public class ProjectController {
             return ResponseEntity.badRequest().body(Map.of("message", "Please choose an image file."));
         }
 
-        String imageUrl = storageService.saveFile(file);
+        String imageUrl = (s3StorageService != null) ? s3StorageService.saveFile(file) : storageService.saveFile(file);
         heroBackgroundService.saveHeroBackgroundUrl(imageUrl);
         return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
     }
@@ -80,10 +83,10 @@ public class ProjectController {
         item.setVideoUrl(videoUrl);
 
         if (beforeImage != null && !beforeImage.isEmpty()) {
-            item.setBeforeImage(storageService.saveFile(beforeImage));
+            item.setBeforeImage((s3StorageService != null) ? s3StorageService.saveFile(beforeImage) : storageService.saveFile(beforeImage));
         }
         if (afterImage != null && !afterImage.isEmpty()) {
-            item.setAfterImage(storageService.saveFile(afterImage));
+            item.setAfterImage((s3StorageService != null) ? s3StorageService.saveFile(afterImage) : storageService.saveFile(afterImage));
         }
 
         return ResponseEntity.ok(repository.save(item));
