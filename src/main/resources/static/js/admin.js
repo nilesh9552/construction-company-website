@@ -27,6 +27,8 @@ const STORAGE_KEYS = {
   projects: 'crm_projects'
 };
 
+let visitsCache = [];
+
 function seedDefaults() {
   if (!localStorage.getItem(STORAGE_KEYS.leads)) {
     localStorage.setItem(STORAGE_KEYS.leads, JSON.stringify([
@@ -49,9 +51,7 @@ function seedDefaults() {
     localStorage.setItem(STORAGE_KEYS.contacts, JSON.stringify({ phone: '+91 90000 00000', email: 'hello@yourcompany.com', address: 'Pune, Maharashtra', map: 'https://maps.google.com/' }));
   }
   if (!localStorage.getItem(STORAGE_KEYS.visits)) {
-    localStorage.setItem(STORAGE_KEYS.visits, JSON.stringify([
-      { id: 1, client: 'Asha K.', date: '2026-06-10', time: '11:30', message: 'Need site survey for home extension.', status: 'Pending' }
-    ]));
+    localStorage.setItem(STORAGE_KEYS.visits, JSON.stringify([]));
   }
   if (!localStorage.getItem(STORAGE_KEYS.content)) {
     localStorage.setItem(STORAGE_KEYS.content, JSON.stringify({ homepage: 'Premium construction and interior solutions for homes and offices.', about: 'We deliver transparent project planning, quality, and client-first service.', hero: 'Build better spaces with confidence.', cta: 'Get a free quote today.' }));
@@ -59,7 +59,11 @@ function seedDefaults() {
 }
 
 function getLocal(key) {
-  return JSON.parse(localStorage.getItem(key) || '[]');
+  try {
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  } catch (error) {
+    return [];
+  }
 }
 
 function saveLocal(key, value) {
@@ -68,7 +72,7 @@ function saveLocal(key, value) {
 
 function renderDashboard() {
   const leads = getLocal(STORAGE_KEYS.leads);
-  const visits = getLocal(STORAGE_KEYS.visits);
+  const visits = visitsCache.length ? visitsCache : getLocal(STORAGE_KEYS.visits);
   const projects = getLocal(STORAGE_KEYS.projects).concat(getLocal('/api/projects') || []);
   const cards = [
     ['Total Leads', leads.length, 'All client inquiries'],
@@ -78,11 +82,14 @@ function renderDashboard() {
     ['Website Visitors', 128 + leads.length * 5, 'Estimated monthly traffic'],
     ['Recent Activity', '3 updates today', 'Leads + content changes']
   ];
-  dashboardCards.innerHTML = cards.map(([label, value, note]) => `<article class="card"><p class="eyebrow">${label}</p><h3>${value}</h3><p class="muted">${note}</p></article>`).join('');
+  if (dashboardCards) {
+    dashboardCards.innerHTML = cards.map(([label, value, note]) => `<article class="card"><p class="eyebrow">${label}</p><h3>${value}</h3><p class="muted">${note}</p></article>`).join('');
+  }
 }
 
 function renderLeads() {
   const leads = getLocal(STORAGE_KEYS.leads);
+  if (!leadList) return;
   leadList.innerHTML = leads.map(item => `
     <article class="card">
       <h3>${item.name}</h3>
@@ -94,9 +101,9 @@ function renderLeads() {
   `).join('');
 }
 
-function updateLeadStatus(id, status) {
+function updateLeadStatus(id, nextStatus) {
   const leads = getLocal(STORAGE_KEYS.leads);
-  saveLocal(STORAGE_KEYS.leads, leads.map(item => item.id === id ? { ...item, status } : item));
+  saveLocal(STORAGE_KEYS.leads, leads.map(item => item.id === id ? { ...item, status: nextStatus } : item));
   renderLeads();
   renderDashboard();
 }
@@ -134,7 +141,9 @@ async function deleteProject(id) {
         throw new Error('Delete failed');
       }
     } catch (error) {
-      status.textContent = 'Project removed from local cache, but server delete failed.';
+      if (status) {
+        status.textContent = 'Project removed from local cache, but server delete failed.';
+      }
     }
   }
 
@@ -143,6 +152,7 @@ async function deleteProject(id) {
 
 function renderServices() {
   const services = getLocal(STORAGE_KEYS.services);
+  if (!serviceList) return;
   serviceList.innerHTML = services.map(item => `<article class="card"><h3>${item.name}</h3><p>${item.description}</p><button class="button" onclick="deleteService(${item.id})">Delete</button></article>`).join('');
 }
 
@@ -154,12 +164,15 @@ function deleteService(id) {
 
 function renderTestimonials() {
   const testimonials = getLocal(STORAGE_KEYS.testimonials);
+  if (!testimonialList) return;
   testimonialList.innerHTML = testimonials.map(item => `<article class="card"><h3>${item.name}</h3><p>${item.text}</p>${item.video ? `<p><a class="button" href="${item.video}" target="_blank">Watch video</a></p>` : ''}</article>`).join('');
 }
 
 function renderContacts() {
   const contacts = getLocal(STORAGE_KEYS.contacts);
-  contactPreview.textContent = `Phone: ${contacts.phone || ''} • Email: ${contacts.email || ''} • Address: ${contacts.address || ''}`;
+  if (contactPreview) {
+    contactPreview.textContent = `Phone: ${contacts.phone || ''} • Email: ${contacts.email || ''} • Address: ${contacts.address || ''}`;
+  }
 }
 
 async function loadContactsFromAPI() {
@@ -167,7 +180,6 @@ async function loadContactsFromAPI() {
     const response = await fetch('/api/contact');
     if (!response.ok) return;
     const data = await response.json();
-    // Update form fields with API data
     document.getElementById('contactPhone').value = data.phone || '+91 90000 00000';
     document.getElementById('contactEmail').value = data.email || 'hello@yourcompany.com';
     document.getElementById('contactAddress').value = data.address || 'Pune, Maharashtra';
@@ -179,15 +191,57 @@ async function loadContactsFromAPI() {
 }
 
 function renderVisits() {
-  const visits = getLocal(STORAGE_KEYS.visits);
-  visitList.innerHTML = visits.map(item => `<article class="card"><h3>${item.client}</h3><p>${item.date} ${item.time}</p><p>${item.message}</p><p class="muted">Status: ${item.status}</p><div class="cta-row"><button class="button" onclick="changeVisitStatus(${item.id}, 'Accepted')">Accept</button><button class="button" onclick="changeVisitStatus(${item.id}, 'Rejected')">Reject</button><button class="button" onclick="changeVisitStatus(${item.id}, 'Completed')">Complete</button></div></article>`).join('');
+  if (!visitList) return;
+  const visits = visitsCache.length ? visitsCache : getLocal(STORAGE_KEYS.visits);
+  visitList.innerHTML = visits.length ? visits.map(item => `
+    <article class="card">
+      <h3>${item.clientName || item.client || 'Visit booking'}</h3>
+      <p class="muted">${item.phone || ''}${item.email ? ` • ${item.email}` : ''}</p>
+      <p>${item.visitDate || item.date || ''}${item.visitTime || item.time ? ` ${item.visitTime || item.time}` : ''}</p>
+      <p>${item.siteAddress || item.address || ''}</p>
+      <p>${item.message || ''}</p>
+      <p class="muted">Status: ${item.status || 'Pending'}</p>
+      <div class="cta-row"><button class="button" onclick="changeVisitStatus(${item.id}, 'Accepted')">Accept</button><button class="button" onclick="changeVisitStatus(${item.id}, 'Rejected')">Reject</button><button class="button" onclick="changeVisitStatus(${item.id}, 'Completed')">Complete</button></div>
+    </article>
+  `).join('') : '<p class="muted">No site visit bookings yet.</p>';
 }
 
-function changeVisitStatus(id, status) {
-  const visits = getLocal(STORAGE_KEYS.visits).map(item => item.id === id ? { ...item, status } : item);
-  saveLocal(STORAGE_KEYS.visits, visits);
-  renderVisits();
-  renderDashboard();
+function changeVisitStatus(id, nextStatus) {
+  fetch(`/api/visits/${id}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ status: nextStatus })
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error('Update failed');
+      }
+      const saved = await response.json();
+      visitsCache = visitsCache.map(item => item.id === saved.id ? saved : item);
+      renderVisits();
+      renderDashboard();
+    })
+    .catch(() => {
+      const visits = getLocal(STORAGE_KEYS.visits).map(item => item.id === id ? { ...item, status: nextStatus } : item);
+      saveLocal(STORAGE_KEYS.visits, visits);
+      renderVisits();
+      renderDashboard();
+    });
+}
+
+async function loadVisitsFromAPI() {
+  try {
+    const response = await fetch('/api/visits');
+    if (!response.ok) return;
+    visitsCache = await response.json();
+    saveLocal(STORAGE_KEYS.visits, visitsCache);
+    renderVisits();
+    renderDashboard();
+  } catch (error) {
+    visitsCache = getLocal(STORAGE_KEYS.visits);
+  }
 }
 
 function applyHeroBackground(url) {
@@ -233,15 +287,15 @@ async function loadHeroBackground() {
 
 async function uploadHeroBackground() {
   const input = document.getElementById('heroBackgroundInput');
-  const status = document.getElementById('heroBackgroundStatus');
+  const heroStatus = document.getElementById('heroBackgroundStatus');
   const file = input?.files?.[0];
 
   if (!file) {
-    status.textContent = 'Please choose an image first.';
+    heroStatus.textContent = 'Please choose an image first.';
     return;
   }
 
-  status.textContent = 'Uploading hero background...';
+  heroStatus.textContent = 'Uploading hero background...';
   const formData = new FormData();
   formData.append('file', file);
 
@@ -252,9 +306,9 @@ async function uploadHeroBackground() {
     applyHeroBackground(data.imageUrl || '');
     updateHeroPreview(data.imageUrl || '');
     localStorage.setItem(STORAGE_KEYS.heroBackground, data.imageUrl || '');
-    status.textContent = 'Homepage background image updated successfully.';
+    heroStatus.textContent = 'Homepage background image updated successfully.';
   } catch (error) {
-    status.textContent = 'Unable to upload the hero background image.';
+    heroStatus.textContent = 'Unable to upload the hero background image.';
   }
 }
 
@@ -274,25 +328,31 @@ renderLeads();
 renderServices();
 renderTestimonials();
 loadContactsFromAPI();
-renderVisits();
+loadVisitsFromAPI();
 renderContent();
 loadAdminItems();
 
 form?.addEventListener('submit', async (event) => {
   event.preventDefault();
   const formData = new FormData(form);
-  status.textContent = 'Saving project...';
+  if (status) {
+    status.textContent = 'Saving project...';
+  }
   try {
     const response = await fetch('/api/projects', { method: 'POST', body: formData });
     if (!response.ok) throw new Error('Failed to save');
     const saved = await response.json();
     const localProjects = getLocal(STORAGE_KEYS.projects);
     saveLocal(STORAGE_KEYS.projects, [...localProjects, { id: saved.id || Date.now(), ...Object.fromEntries(formData.entries()), location: formData.get('location') || '', budget: formData.get('budget') || '', timeline: formData.get('timeline') || '' }]);
-    status.textContent = 'Project saved successfully.';
+    if (status) {
+      status.textContent = 'Project saved successfully.';
+    }
     form.reset();
     await loadAdminItems();
   } catch (error) {
-    status.textContent = 'Something went wrong while saving the project.';
+    if (status) {
+      status.textContent = 'Something went wrong while saving the project.';
+    }
   }
 });
 
@@ -333,7 +393,7 @@ contactForm?.addEventListener('submit', async (event) => {
     address: document.getElementById('contactAddress').value || 'Pune, Maharashtra',
     mapUrl: document.getElementById('contactMap').value || 'https://maps.google.com/'
   };
-  
+
   try {
     const response = await fetch('/api/contact', {
       method: 'POST',
@@ -342,7 +402,7 @@ contactForm?.addEventListener('submit', async (event) => {
       },
       body: JSON.stringify(contactData)
     });
-    
+
     if (response.ok) {
       saveLocal(STORAGE_KEYS.contacts, contactData);
       renderContacts();
@@ -358,12 +418,43 @@ contactForm?.addEventListener('submit', async (event) => {
 
 visitForm?.addEventListener('submit', (event) => {
   event.preventDefault();
-  const visits = getLocal(STORAGE_KEYS.visits);
-  visits.unshift({ id: Date.now(), client: document.getElementById('visitClient').value, date: document.getElementById('visitDate').value, time: document.getElementById('visitTime').value, message: document.getElementById('visitMessage').value, status: 'Pending' });
-  saveLocal(STORAGE_KEYS.visits, visits);
-  visitForm.reset();
-  renderVisits();
-  renderDashboard();
+  const booking = {
+    clientName: document.getElementById('visitClient').value,
+    phone: document.getElementById('visitPhone').value,
+    email: document.getElementById('visitEmail').value,
+    visitDate: document.getElementById('visitDate').value,
+    visitTime: document.getElementById('visitTime').value,
+    siteAddress: document.getElementById('visitAddress').value,
+    message: document.getElementById('visitMessage').value,
+    status: 'Pending'
+  };
+
+  fetch('/api/visits', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(booking)
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error('Failed to save');
+      }
+      const saved = await response.json();
+      visitsCache.unshift(saved);
+      saveLocal(STORAGE_KEYS.visits, visitsCache);
+      visitForm.reset();
+      renderVisits();
+      renderDashboard();
+    })
+    .catch(() => {
+      const visits = getLocal(STORAGE_KEYS.visits);
+      visits.unshift({ id: Date.now(), ...booking });
+      saveLocal(STORAGE_KEYS.visits, visits);
+      visitForm.reset();
+      renderVisits();
+      renderDashboard();
+    });
 });
 
 document.getElementById('heroBackgroundUpload')?.addEventListener('click', uploadHeroBackground);

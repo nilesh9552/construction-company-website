@@ -17,17 +17,17 @@
       <article class="card reveal"><h3>WhatsApp</h3><p><a id="contactWhatsappLink" href="https://wa.me/919000000000" target="_blank" rel="noreferrer">Chat on WhatsApp</a></p></article>
       <article class="card reveal"><h3>Office address</h3><p id="contactAddressText">Vighnaharta Construction & Interiors, Pune, Maharashtra</p></article>
       <article class="card reveal"><h3>Google Maps</h3><p><a id="contactMapLink" href="https://maps.google.com/" target="_blank" rel="noreferrer">Use Google Maps to find our office or meeting point.</a></p></article>
-      <article class="card reveal"><h3>Book site visit</h3><p>Send your date, time, address, and message below. We will confirm soon.</p></article>
+      <article class="card reveal"><h3>Book site visit</h3><p>Send your name, phone, email, date, time, address, and message below. We will confirm soon.</p></article>
     </section>
     <section class="card reveal section">
-      <form class="stack">
-        <input type="text" placeholder="Your name" />
-        <input type="tel" placeholder="Phone number" />
-        <input type="email" placeholder="Email address" />
-        <input type="date" />
-        <input type="time" />
-        <input type="text" placeholder="Site address" />
-        <textarea placeholder="Message"></textarea>
+      <form id="visitForm" class="stack">
+        <input id="visitClient" type="text" placeholder="Your name" required />
+        <input id="visitPhone" type="tel" placeholder="Phone number" required />
+        <input id="visitEmail" type="email" placeholder="Email address" required />
+        <input id="visitDate" type="date" required />
+        <input id="visitTime" type="time" required />
+        <input id="visitAddress" type="text" placeholder="Site address" required />
+        <textarea id="visitMessage" placeholder="Message" required></textarea>
         <button class="button primary" type="submit">Book Visit</button>
       </form>
     </section>
@@ -37,5 +37,6 @@
   <a class="floating-button call" href="tel:+919000000000">📞</a>
   <script src="/js/nav.js?v=20260610-2"></script>
   <script src="/js/contact-loader.js?v=20260612-1"></script>
+  <script src="/js/contact-booking.js?v=20260617-1"></script>
 </body>
 </html>
