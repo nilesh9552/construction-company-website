@@ -1,9 +1,25 @@
+function normalizeProject(item = {}) {
+  return {
+    ...item,
+    title: item.title || item.name || 'Project',
+    category: item.category || 'Construction',
+    description: item.description || 'Project details available on request.',
+    location: item.location || 'Not shared yet',
+    budget: item.budget || 'Discuss during estimate',
+    timeline: item.timeline || 'Depends on scope',
+    beforeImage: item.beforeImage || item.before_image || '',
+    afterImage: item.afterImage || item.after_image || '',
+    imageUrl: item.imageUrl || item.image_url || ''
+  };
+}
+
 async function loadProjects() {
   const grid = document.getElementById('projectsGrid');
   if (!grid) return;
   try {
     const response = await fetch('/api/projects');
-    const projects = await response.json();
+    const payload = await response.json();
+    const projects = Array.isArray(payload) ? payload.map(normalizeProject) : [];
     const items = projects.length ? projects : getFeaturedProjects();
     grid.innerHTML = items.map(renderProject).join('');
   } catch (error) {

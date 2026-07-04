@@ -2,6 +2,7 @@ package com.example.construction.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,7 +32,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/admin.html", "/api/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/hero-background").permitAll()
+                .requestMatchers("/admin.html").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/projects", "/api/projects/hero-background").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/projects/**").hasRole("ADMIN")
                 .requestMatchers("/login.html", "/login", "/error", "/css/**", "/js/**", "/images/**").permitAll()
                 .anyRequest().permitAll()
             )

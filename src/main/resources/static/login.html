@@ -1,20 +1,39 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Admin Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login | Vighnaharta Construction & Interiors</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Baloo+2:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body>
-  <div class="login-container">
-    <h2>Admin Login</h2>
-    <p id="loginError" style="display:none;color:#b00020;">Invalid username or password.</p>
-    <form method="post" action="/login">
-      <label>Username<br><input name="username" required></label><br>
-      <label>Password<br><input name="password" type="password" required></label><br>
-      <button type="submit">Sign in</button>
-    </form>
+<body class="auth-page">
+  <div class="auth-shell">
+    <div class="auth-card glass-card">
+      <div class="auth-brand">
+        <p class="eyebrow">Secure Access</p>
+        <h1>Admin Login</h1>
+        <p>Access the project dashboard and manage your construction updates.</p>
+      </div>
+
+      <p id="loginError" class="auth-error" style="display:none;">Invalid username or password.</p>
+
+      <form class="auth-form" method="post" action="/login">
+        <label>
+          <span>Username</span>
+          <input name="username" required autocomplete="username" />
+        </label>
+        <label>
+          <span>Password</span>
+          <input name="password" type="password" required autocomplete="current-password" />
+        </label>
+        <button class="button primary auth-submit" type="submit">Sign in</button>
+      </form>
+    </div>
   </div>
+
   <script>
     if (new URLSearchParams(window.location.search).has('error')) {
       document.getElementById('loginError').style.display = 'block';

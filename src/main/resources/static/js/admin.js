@@ -29,6 +29,26 @@ const STORAGE_KEYS = {
 
 let visitsCache = [];
 
+function normalizeProject(item = {}) {
+  return {
+    ...item,
+    id: item.id ?? item.projectId ?? item._id,
+    title: item.title || item.name || 'Project',
+    category: item.category || 'Construction',
+    description: item.description || 'Project details available on request.',
+    location: item.location || '',
+    budget: item.budget || '',
+    timeline: item.timeline || '',
+    beforeImage: item.beforeImage || item.before_image || '',
+    afterImage: item.afterImage || item.after_image || '',
+    videoUrl: item.videoUrl || item.video_url || ''
+  };
+}
+
+function getProjectsFromStorage() {
+  return (getLocal(STORAGE_KEYS.projects) || []).map(normalizeProject);
+}
+
 function seedDefaults() {
   if (!localStorage.getItem(STORAGE_KEYS.leads)) {
     localStorage.setItem(STORAGE_KEYS.leads, JSON.stringify([
@@ -110,10 +130,22 @@ function updateLeadStatus(id, nextStatus) {
 
 async function loadAdminItems() {
   if (!list) return;
-  const response = await fetch('/api/projects');
-  const apiItems = await response.json();
-  const localItems = getLocal(STORAGE_KEYS.projects);
-  const items = [...localItems, ...apiItems];
+
+  let apiItems = [];
+  try {
+    const response = await fetch('/api/projects');
+    if (response.ok) {
+      apiItems = await response.json();
+    }
+  } catch (error) {
+    apiItems = [];
+  }
+
+  const localItems = getProjectsFromStorage();
+  const items = [...localItems, ...apiItems]
+    .map(normalizeProject)
+    .filter((item, index, array) => index === array.findIndex(candidate => String(candidate.id || candidate.title) === String(item.id || item.title)));
+
   list.innerHTML = items.length ? items.map(item => `
     <article class="card">
       <h3>${item.title}</h3>
@@ -130,7 +162,7 @@ async function loadAdminItems() {
 
 async function deleteProject(id) {
   const projectId = String(id);
-  const localItems = getLocal(STORAGE_KEYS.projects).filter(item => String(item.id || item.title) !== projectId);
+  const localItems = getProjectsFromStorage().filter(item => String(item.id || item.title) !== projectId);
   saveLocal(STORAGE_KEYS.projects, localItems);
 
   const numericId = Number(projectId);
@@ -342,8 +374,16 @@ form?.addEventListener('submit', async (event) => {
     const response = await fetch('/api/projects', { method: 'POST', body: formData });
     if (!response.ok) throw new Error('Failed to save');
     const saved = await response.json();
-    const localProjects = getLocal(STORAGE_KEYS.projects);
-    saveLocal(STORAGE_KEYS.projects, [...localProjects, { id: saved.id || Date.now(), ...Object.fromEntries(formData.entries()), location: formData.get('location') || '', budget: formData.get('budget') || '', timeline: formData.get('timeline') || '' }]);
+    const localProjects = getProjectsFromStorage();
+    const savedProject = normalizeProject({
+      id: saved.id || Date.now(),
+      ...saved,
+      ...Object.fromEntries(formData.entries()),
+      location: formData.get('location') || '',
+      budget: formData.get('budget') || '',
+      timeline: formData.get('timeline') || ''
+    });
+    saveLocal(STORAGE_KEYS.projects, [savedProject, ...localProjects.filter(item => String(item.id || item.title) !== String(savedProject.id || savedProject.title))]);
     if (status) {
       status.textContent = 'Project saved successfully.';
     }
