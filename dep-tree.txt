@@ -1,0 +1,22 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------< com.example:construction-company-website >--------------
+[INFO] Building construction-company-website 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.6.1:tree (default-cli) @ construction-company-website ---
+[INFO] com.example:construction-company-website:jar:1.0.0
+[INFO] +- software.amazon.awssdk:s3:jar:2.20.0:compile
+[INFO] |  \- software.amazon.awssdk:apache-client:jar:2.20.0:runtime
+[INFO] |     \- org.apache.httpcomponents:httpclient:jar:4.5.13:runtime
+[INFO] |        \- commons-logging:commons-logging:jar:1.2:runtime
+[INFO] \- org.springframework.boot:spring-boot-starter-test:jar:3.3.1:test
+[INFO]    \- org.springframework:spring-core:jar:6.1.10:compile
+[INFO]       \- org.springframework:spring-jcl:jar:6.1.10:compile
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.336 s
+[INFO] Finished at: 2026-07-07T16:49:13+05:30
+[INFO] ------------------------------------------------------------------------

@@ -1,0 +1,19 @@
+﻿[INFO] Scanning for projects...
+Downloading from central: https://repo.maven.apache.org/maven2/amazon/awssdk/url-connection-client,software.amazon.awssdk/apache-client,org.apache.httpcomponents/url-connection-client,software.amazon.awssdk-apache-client,org.apache.httpcomponents.pom
+[WARNING] The POM for .amazon.awssdk:url-connection-client,software.amazon.awssdk:jar:apache-client,org.apache.httpcomponents is missing, no dependency information available
+Downloading from central: https://repo.maven.apache.org/maven2/amazon/awssdk/url-connection-client,software.amazon.awssdk/apache-client,org.apache.httpcomponents/url-connection-client,software.amazon.awssdk-apache-client,org.apache.httpcomponents.jar
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.519 s
+[INFO] Finished at: 2026-07-07T16:49:52+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Plugin .amazon.awssdk:url-connection-client,software.amazon.awssdk:apache-client,org.apache.httpcomponents or one of its dependencies could not be resolved:
+[ERROR] 	Could not find artifact .amazon.awssdk:url-connection-client,software.amazon.awssdk:jar:apache-client,org.apache.httpcomponents in central (https://repo.maven.apache.org/maven2)
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/PluginResolutionException

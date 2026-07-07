@@ -1,0 +1,14 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------< com.example:construction-company-website >--------------
+[INFO] Building construction-company-website 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.6.1:tree (default-cli) @ construction-company-website ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.163 s
+[INFO] Finished at: 2026-07-07T16:50:17+05:30
+[INFO] ------------------------------------------------------------------------
