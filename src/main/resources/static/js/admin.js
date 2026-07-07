@@ -15,6 +15,7 @@ const contentForm = document.getElementById('contentForm');
 const dashboardCards = document.getElementById('dashboardCards');
 const currentHeroPreview = document.getElementById('currentHeroPreview');
 const heroPreviewStatus = document.getElementById('heroPreviewStatus');
+const projectChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('construction-projects') : null;
 
 const STORAGE_KEYS = {
   leads: 'crm_leads',
@@ -384,6 +385,9 @@ form?.addEventListener('submit', async (event) => {
       timeline: formData.get('timeline') || ''
     });
     saveLocal(STORAGE_KEYS.projects, [savedProject, ...localProjects.filter(item => String(item.id || item.title) !== String(savedProject.id || savedProject.title))]);
+    localStorage.setItem(STORAGE_KEYS.projects, JSON.stringify([savedProject, ...localProjects.filter(item => String(item.id || item.title) !== String(savedProject.id || savedProject.title))]));
+    projectChannel?.postMessage({ type: 'projects-updated', project: savedProject });
+    window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEYS.projects }));
     if (status) {
       status.textContent = 'Project saved successfully.';
     }

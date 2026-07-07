@@ -1,6 +1,10 @@
+const PROJECTS_STORAGE_KEY = 'crm_projects';
+const projectChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('construction-projects') : null;
+
 function normalizeProject(item = {}) {
   return {
     ...item,
+    id: item.id ?? item.projectId ?? item._id,
     title: item.title || item.name || 'Project',
     category: item.category || 'Construction',
     description: item.description || 'Project details available on request.',
@@ -9,26 +13,57 @@ function normalizeProject(item = {}) {
     timeline: item.timeline || 'Depends on scope',
     beforeImage: item.beforeImage || item.before_image || '',
     afterImage: item.afterImage || item.after_image || '',
-    imageUrl: item.imageUrl || item.image_url || ''
+    imageUrl: item.imageUrl || item.image_url || '',
+    videoUrl: item.videoUrl || item.video_url || ''
   };
+}
+
+function getProjectsFromStorage() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(PROJECTS_STORAGE_KEY) || '[]');
+    return Array.isArray(stored) ? stored.map(normalizeProject) : [];
+  } catch (error) {
+    return [];
+  }
 }
 
 async function loadProjects() {
   const grid = document.getElementById('projectsGrid');
   if (!grid) return;
+
+  const localProjects = getProjectsFromStorage();
+  if (localProjects.length) {
+    grid.innerHTML = localProjects.map(renderProject).join('');
+  }
+
   try {
     const response = await fetch('/api/projects');
     const payload = await response.json();
-    const projects = Array.isArray(payload) ? payload.map(normalizeProject) : [];
-    const items = projects.length ? projects : getFeaturedProjects();
+    const apiProjects = Array.isArray(payload) ? payload.map(normalizeProject) : [];
+    const mergedProjects = [...localProjects, ...apiProjects]
+      .map(normalizeProject)
+      .filter((item, index, array) => index === array.findIndex(candidate => String(candidate.id || candidate.title) === String(item.id || item.title)));
+    const items = mergedProjects.length ? mergedProjects : getFeaturedProjects();
     grid.innerHTML = items.map(renderProject).join('');
   } catch (error) {
-    grid.innerHTML = getFeaturedProjects().map(renderProject).join('');
+    const fallbackProjects = localProjects.length ? localProjects : getFeaturedProjects();
+    grid.innerHTML = fallbackProjects.map(renderProject).join('');
   }
 }
 
+let projectsRefreshTimer = null;
+
+function scheduleProjectsRefresh() {
+  if (projectsRefreshTimer) {
+    clearTimeout(projectsRefreshTimer);
+  }
+  projectsRefreshTimer = setTimeout(() => {
+    loadProjects();
+  }, 250);
+}
+
 function renderProject(item) {
-  const image = item.afterImage || item.beforeImage || item.imageUrl || '/images/backgrounds/Modern%20House%20Design%20%F0%9F%8F%A1.jpg';
+  const image = item.afterImage || item.beforeImage || item.imageUrl || '/images/backgrounds/modern-house.jpg';
   const title = escapeHtml(item.title || 'Project');
   const category = escapeHtml(item.category || 'Construction');
   const description = escapeHtml(item.description || 'Project details available on request.');
@@ -36,7 +71,7 @@ function renderProject(item) {
   const budget = escapeHtml(item.budget || 'Discuss during estimate');
   const timeline = escapeHtml(item.timeline || 'Depends on scope');
   return `
-    <article class="card project-card reveal" tabindex="0">
+    <article class="card project-card" tabindex="0">
       <div class="project-media">
         <img src="${image}" alt="${title} project photo" loading="lazy" />
         <span class="project-tag">${category}</span>
@@ -65,7 +100,7 @@ function getFeaturedProjects() {
       location: 'Pune',
       budget: '₹45–60 Lakhs',
       timeline: '5 months',
-      imageUrl: '/images/backgrounds/Modern%20House%20Design%20%F0%9F%8F%A1.jpg'
+      imageUrl: '/images/backgrounds/modern-house.jpg'
     },
     {
       title: 'Office Interior',
@@ -74,7 +109,7 @@ function getFeaturedProjects() {
       location: 'Mumbai',
       budget: '₹20–30 Lakhs',
       timeline: '8 weeks',
-      imageUrl: '/images/backgrounds/Modern%20House%20Design%20%F0%9F%8F%A1.jpg'
+      imageUrl: '/images/backgrounds/modern-house.jpg'
     },
     {
       title: 'Home Build',
@@ -83,7 +118,7 @@ function getFeaturedProjects() {
       location: 'Nashik',
       budget: '₹80 Lakhs–1.2 Cr',
       timeline: '10 months',
-      imageUrl: '/images/backgrounds/Modern%20House%20Design%20%F0%9F%8F%A1.jpg'
+      imageUrl: '/images/backgrounds/modern-house.jpg'
     },
     {
       title: 'Turnkey Project',
@@ -92,7 +127,7 @@ function getFeaturedProjects() {
       location: 'Navi Mumbai',
       budget: '₹1.5 Cr+',
       timeline: '12 months',
-      imageUrl: '/images/backgrounds/Modern%20House%20Design%20%F0%9F%8F%A1.jpg'
+      imageUrl: '/images/backgrounds/modern-house.jpg'
     }
   ];
 }
@@ -110,4 +145,32 @@ function escapeAttribute(value) {
   return escapeHtml(value).replace(/`/g, '&#96;');
 }
 
-loadProjects();
+function initializeProjectsPage() {
+  loadProjects();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeProjectsPage, { once: true });
+} else {
+  initializeProjectsPage();
+}
+
+window.addEventListener('pageshow', () => {
+  initializeProjectsPage();
+});
+
+window.addEventListener('storage', (event) => {
+  if (event.key === PROJECTS_STORAGE_KEY) {
+    scheduleProjectsRefresh();
+  }
+});
+
+projectChannel?.addEventListener('message', (event) => {
+  if (event.data?.type === 'projects-updated') {
+    scheduleProjectsRefresh();
+  }
+});
+
+setInterval(() => {
+  loadProjects();
+}, 5000);
