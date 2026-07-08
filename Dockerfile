@@ -19,8 +19,10 @@ RUN mkdir -p /var/data/uploads && chown -R spring:spring /var/data
 
 USER spring
 
+# Run with the active profile and force the JVM to bind to the PORT environment
+# injected by Render. Use a shell form so the $PORT variable is expanded at runtime.
 ENV SPRING_PROFILES_ACTIVE=prod
 
-EXPOSE 8080
+EXPOSE 8081
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8081} -jar /app/app.jar"]
