@@ -3,7 +3,6 @@ package com.example.construction.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -17,7 +16,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-@Service
+// Legacy S3 storage support has been disabled. Cloudinary is now the active storage provider.
 public class S3StorageService {
 
     private static final Logger log = LoggerFactory.getLogger(S3StorageService.class);

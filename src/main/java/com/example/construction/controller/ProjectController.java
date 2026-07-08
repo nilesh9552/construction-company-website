@@ -2,9 +2,8 @@ package com.example.construction.controller;
 
 import com.example.construction.model.ProjectItem;
 import com.example.construction.repository.ProjectItemRepository;
+import com.example.construction.service.CloudinaryStorageService;
 import com.example.construction.service.HeroBackgroundService;
-import com.example.construction.service.StorageService;
-import com.example.construction.service.S3StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -23,14 +22,12 @@ public class ProjectController {
     private static final Logger log = LoggerFactory.getLogger(ProjectController.class);
 
     private final ProjectItemRepository repository;
-    private final StorageService storageService;
-    private final S3StorageService s3StorageService;
+    private final CloudinaryStorageService storageService;
     private final HeroBackgroundService heroBackgroundService;
 
-    public ProjectController(ProjectItemRepository repository, StorageService storageService, S3StorageService s3StorageService, HeroBackgroundService heroBackgroundService) {
+    public ProjectController(ProjectItemRepository repository, CloudinaryStorageService storageService, HeroBackgroundService heroBackgroundService) {
         this.repository = repository;
         this.storageService = storageService;
-        this.s3StorageService = s3StorageService;
         this.heroBackgroundService = heroBackgroundService;
     }
 
@@ -61,7 +58,7 @@ public class ProjectController {
         }
 
         try {
-            String imageUrl = (s3StorageService != null) ? s3StorageService.saveFile(file) : storageService.saveFile(file);
+            String imageUrl = storageService.saveFile(file);
             heroBackgroundService.saveHeroBackgroundUrl(imageUrl);
             return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
         } catch (Exception e) {
@@ -95,10 +92,10 @@ public class ProjectController {
 
         try {
             if (beforeImage != null && !beforeImage.isEmpty()) {
-                item.setBeforeImage(s3StorageService.saveFile(beforeImage));
+                item.setBeforeImage(storageService.saveFile(beforeImage));
             }
             if (afterImage != null && !afterImage.isEmpty()) {
-                item.setAfterImage(s3StorageService.saveFile(afterImage));
+                item.setAfterImage(storageService.saveFile(afterImage));
             }
 
             ProjectItem saved = repository.save(item);

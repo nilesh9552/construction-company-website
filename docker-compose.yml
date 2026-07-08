@@ -22,10 +22,12 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       ADMIN_USER: admin
       ADMIN_PASSWORD: password
+      CLOUDINARY_CLOUD_NAME: your-cloud-name
+      CLOUDINARY_API_KEY: your-api-key
+      CLOUDINARY_API_SECRET: your-api-secret
+      CLOUDINARY_FOLDER: construction_website
     ports:
       - "8080:8080"
-    volumes:
-      - ./uploads:/var/data/uploads
 
 volumes:
   pgdata:

@@ -2,7 +2,6 @@ package com.example.construction.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -12,7 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
-@Service
+// Legacy local storage support has been disabled. Cloudinary is now the active storage provider.
 public class StorageService {
     private static final Logger log = LoggerFactory.getLogger(StorageService.class);
 

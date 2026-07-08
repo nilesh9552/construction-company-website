@@ -15,12 +15,12 @@ RUN addgroup --system spring && adduser --system --ingroup spring spring
 
 COPY --from=build /workspace/target/construction-company-website-1.0.0.jar /app/app.jar
 
-RUN mkdir -p /var/data/uploads && chown -R spring:spring /var/data
+RUN mkdir -p /var/data && chown -R spring:spring /var/data
 
 USER spring
 
 # Run with the active profile and force the JVM to bind to the PORT environment
-# injected by Render. Use a shell form so the $PORT variable is expanded at runtime.
+# injected by Render.
 ENV SPRING_PROFILES_ACTIVE=prod
 
 EXPOSE 8081

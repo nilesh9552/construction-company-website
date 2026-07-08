@@ -1,7 +1,6 @@
 package com.example.construction.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -9,7 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@Configuration
+// Local upload resource handler no longer applies because uploads are stored in Cloudinary.
 public class WebConfig implements WebMvcConfigurer {
     private final String uploadDirPath;
 
