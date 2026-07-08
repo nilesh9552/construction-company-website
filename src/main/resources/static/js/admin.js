@@ -94,7 +94,7 @@ function saveLocal(key, value) {
 function renderDashboard() {
   const leads = getLocal(STORAGE_KEYS.leads);
   const visits = visitsCache.length ? visitsCache : getLocal(STORAGE_KEYS.visits);
-  const projects = getLocal(STORAGE_KEYS.projects).concat(getLocal('/api/projects') || []);
+  const projects = getProjectsFromStorage().concat(getLocal('/api/projects') || []);
   const cards = [
     ['Total Leads', leads.length, 'All client inquiries'],
     ['New Leads', leads.filter(item => item.status === 'New').length, 'Fresh inquiries'],
@@ -298,11 +298,24 @@ function updateHeroPreview(url) {
   heroPreviewStatus.textContent = 'No hero image selected yet.';
 }
 
+async function parseResponseBody(response) {
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return await response.json();
+  }
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
+  }
+}
+
 async function loadHeroBackground() {
   try {
     const response = await fetch('/api/projects/hero-background');
     if (!response.ok) return;
-    const data = await response.json();
+    const data = await parseResponseBody(response);
     if (data?.imageUrl) {
       applyHeroBackground(data.imageUrl);
       updateHeroPreview(data.imageUrl);
@@ -333,9 +346,13 @@ async function uploadHeroBackground() {
   formData.append('file', file);
 
   try {
-    const response = await fetch('/api/projects/hero-background', { method: 'POST', body: formData });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data?.message || 'Upload failed');
+    const response = await fetch('/api/projects/hero-background', {
+      method: 'POST',
+      body: formData,
+      credentials: 'same-origin'
+    });
+    const data = await parseResponseBody(response);
+    if (!response.ok) throw new Error(data?.message || data?.error || response.statusText || 'Upload failed');
     applyHeroBackground(data.imageUrl || '');
     updateHeroPreview(data.imageUrl || '');
     localStorage.setItem(STORAGE_KEYS.heroBackground, data.imageUrl || '');
@@ -372,24 +389,27 @@ form?.addEventListener('submit', async (event) => {
     status.textContent = 'Saving project...';
   }
   try {
-    const response = await fetch('/api/projects', { method: 'POST', body: formData });
-    const saved = response.ok ? await response.json() : null;
+    const response = await fetch('/api/projects', {
+      method: 'POST',
+      body: formData,
+      credentials: 'same-origin'
+    });
+    const data = await parseResponseBody(response);
     if (!response.ok) {
-      let errMsg = 'Failed to save';
-      try { const err = await response.json(); if (err?.message) errMsg = err.message; } catch {}
-      throw new Error(errMsg);
+      throw new Error(data?.message || data?.error || response.statusText || 'Failed to save the project');
     }
     const localProjects = getProjectsFromStorage();
     const savedProject = normalizeProject({
-      id: saved.id || Date.now(),
-      ...saved,
-      ...Object.fromEntries(formData.entries()),
+      id: data.id || Date.now(),
+      ...data,
       location: formData.get('location') || '',
       budget: formData.get('budget') || '',
-      timeline: formData.get('timeline') || ''
+      timeline: formData.get('timeline') || '',
+      videoUrl: formData.get('videoUrl') || ''
     });
-    saveLocal(STORAGE_KEYS.projects, [savedProject, ...localProjects.filter(item => String(item.id || item.title) !== String(savedProject.id || savedProject.title))]);
-    localStorage.setItem(STORAGE_KEYS.projects, JSON.stringify([savedProject, ...localProjects.filter(item => String(item.id || item.title) !== String(savedProject.id || savedProject.title))]));
+    const projectList = [savedProject, ...localProjects.filter(item => String(item.id || item.title) !== String(savedProject.id || savedProject.title))];
+    saveLocal(STORAGE_KEYS.projects, projectList);
+    localStorage.setItem(STORAGE_KEYS.projects, JSON.stringify(projectList));
     projectChannel?.postMessage({ type: 'projects-updated', project: savedProject });
     window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEYS.projects }));
     if (status) {
@@ -398,9 +418,11 @@ form?.addEventListener('submit', async (event) => {
     form.reset();
     await loadAdminItems();
   } catch (error) {
+    const message = error?.message || 'Something went wrong while saving the project.';
     if (status) {
-      status.textContent = 'Something went wrong while saving the project.';
+      status.textContent = message;
     }
+    console.error('Project save error:', message, error);
   }
 });
 

@@ -5,6 +5,8 @@ import com.example.construction.repository.ProjectItemRepository;
 import com.example.construction.service.HeroBackgroundService;
 import com.example.construction.service.StorageService;
 import com.example.construction.service.S3StorageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,8 @@ import java.util.Map;
 @RequestMapping("/api/projects")
 @CrossOrigin(origins = "*")
 public class ProjectController {
+
+    private static final Logger log = LoggerFactory.getLogger(ProjectController.class);
 
     private final ProjectItemRepository repository;
     private final StorageService storageService;
@@ -65,8 +69,8 @@ public class ProjectController {
         }
     }
 
-    @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseEntity<ProjectItem> create(
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Object> create(
             @RequestParam("title") String title,
             @RequestParam("category") String category,
             @RequestParam("description") String description,
@@ -76,6 +80,9 @@ public class ProjectController {
             @RequestParam(value = "beforeImage", required = false) MultipartFile beforeImage,
             @RequestParam(value = "afterImage", required = false) MultipartFile afterImage,
             @RequestParam(value = "videoUrl", required = false) String videoUrl) {
+
+        log.info("Saving project: title='{}', category='{}', beforeImagePresent={}, afterImagePresent={}",
+                title, category, beforeImage != null && !beforeImage.isEmpty(), afterImage != null && !afterImage.isEmpty());
 
         ProjectItem item = new ProjectItem();
         item.setTitle(title);
@@ -88,16 +95,17 @@ public class ProjectController {
 
         try {
             if (beforeImage != null && !beforeImage.isEmpty()) {
-                item.setBeforeImage((s3StorageService != null) ? s3StorageService.saveFile(beforeImage) : storageService.saveFile(beforeImage));
+                item.setBeforeImage(s3StorageService.saveFile(beforeImage));
             }
             if (afterImage != null && !afterImage.isEmpty()) {
-                item.setAfterImage((s3StorageService != null) ? s3StorageService.saveFile(afterImage) : storageService.saveFile(afterImage));
+                item.setAfterImage(s3StorageService.saveFile(afterImage));
             }
 
             ProjectItem saved = repository.save(item);
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
-            return ResponseEntity.status(500).build();
+            log.error("Failed to save project item", e);
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to save project: " + e.getMessage()));
         }
     }
 }
