@@ -334,14 +334,14 @@ async function uploadHeroBackground() {
 
   try {
     const response = await fetch('/api/projects/hero-background', { method: 'POST', body: formData });
-    if (!response.ok) throw new Error('Upload failed');
     const data = await response.json();
+    if (!response.ok) throw new Error(data?.message || 'Upload failed');
     applyHeroBackground(data.imageUrl || '');
     updateHeroPreview(data.imageUrl || '');
     localStorage.setItem(STORAGE_KEYS.heroBackground, data.imageUrl || '');
     heroStatus.textContent = 'Homepage background image updated successfully.';
   } catch (error) {
-    heroStatus.textContent = 'Unable to upload the hero background image.';
+    heroStatus.textContent = error?.message || 'Unable to upload the hero background image.';
   }
 }
 
@@ -373,8 +373,12 @@ form?.addEventListener('submit', async (event) => {
   }
   try {
     const response = await fetch('/api/projects', { method: 'POST', body: formData });
-    if (!response.ok) throw new Error('Failed to save');
-    const saved = await response.json();
+    const saved = response.ok ? await response.json() : null;
+    if (!response.ok) {
+      let errMsg = 'Failed to save';
+      try { const err = await response.json(); if (err?.message) errMsg = err.message; } catch {}
+      throw new Error(errMsg);
+    }
     const localProjects = getProjectsFromStorage();
     const savedProject = normalizeProject({
       id: saved.id || Date.now(),

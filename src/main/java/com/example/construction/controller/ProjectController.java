@@ -56,9 +56,13 @@ public class ProjectController {
             return ResponseEntity.badRequest().body(Map.of("message", "Please choose an image file."));
         }
 
-        String imageUrl = (s3StorageService != null) ? s3StorageService.saveFile(file) : storageService.saveFile(file);
-        heroBackgroundService.saveHeroBackgroundUrl(imageUrl);
-        return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
+        try {
+            String imageUrl = (s3StorageService != null) ? s3StorageService.saveFile(file) : storageService.saveFile(file);
+            heroBackgroundService.saveHeroBackgroundUrl(imageUrl);
+            return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to upload hero background: " + e.getMessage()));
+        }
     }
 
     @PostMapping(consumes = {"multipart/form-data"})
@@ -82,13 +86,18 @@ public class ProjectController {
         item.setTimeline(timeline);
         item.setVideoUrl(videoUrl);
 
-        if (beforeImage != null && !beforeImage.isEmpty()) {
-            item.setBeforeImage((s3StorageService != null) ? s3StorageService.saveFile(beforeImage) : storageService.saveFile(beforeImage));
-        }
-        if (afterImage != null && !afterImage.isEmpty()) {
-            item.setAfterImage((s3StorageService != null) ? s3StorageService.saveFile(afterImage) : storageService.saveFile(afterImage));
-        }
+        try {
+            if (beforeImage != null && !beforeImage.isEmpty()) {
+                item.setBeforeImage((s3StorageService != null) ? s3StorageService.saveFile(beforeImage) : storageService.saveFile(beforeImage));
+            }
+            if (afterImage != null && !afterImage.isEmpty()) {
+                item.setAfterImage((s3StorageService != null) ? s3StorageService.saveFile(afterImage) : storageService.saveFile(afterImage));
+            }
 
-        return ResponseEntity.ok(repository.save(item));
+            ProjectItem saved = repository.save(item);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
     }
 }
