@@ -43,7 +43,8 @@ public class CloudinaryStorageService {
             @Value("${cloudinary.cloud-name:}") String cloudName,
             @Value("${cloudinary.api-key:}") String apiKey,
             @Value("${cloudinary.api-secret:}") String apiSecret,
-            @Value("${cloudinary.folder:construction_website}") String folder) {
+            @Value("${cloudinary.folder:construction_website}") String folder,
+            @Value("${app.upload-dir:uploads}") String uploadDirPath) {
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;
         this.folder = folder;
@@ -51,12 +52,25 @@ public class CloudinaryStorageService {
                 ? null
                 : String.format("https://api.cloudinary.com/v1_1/%s/image/upload", cloudName);
         this.enabled = this.uploadUrl != null && !this.apiKey.isBlank() && !this.apiSecret.isBlank();
-        this.uploadDir = Paths.get("uploads").toAbsolutePath().normalize();
+
+        Path configuredUploads = Paths.get(uploadDirPath).toAbsolutePath().normalize();
+        Path fallbackUploads = Paths.get(System.getProperty("java.io.tmpdir"), "uploads").toAbsolutePath().normalize();
+        Path chosen = configuredUploads;
+
         try {
-            Files.createDirectories(this.uploadDir);
+            Files.createDirectories(chosen);
         } catch (IOException ex) {
-            log.warn("Unable to create uploads directory {}: {}", this.uploadDir, ex.getMessage());
+            log.warn("Unable to create configured uploads directory {}: {}. Falling back to {}", chosen, ex.getMessage(), fallbackUploads);
+            chosen = fallbackUploads;
+            try {
+                Files.createDirectories(chosen);
+            } catch (IOException fallbackEx) {
+                log.error("Unable to create fallback uploads directory {}: {}. Uploads will fail.", chosen, fallbackEx.getMessage());
+            }
         }
+
+        this.uploadDir = chosen;
+        log.info("Using upload directory: {}", this.uploadDir);
     }
 
     public String saveFile(MultipartFile file) {
@@ -118,14 +132,28 @@ public class CloudinaryStorageService {
         String safeName = UUID.randomUUID() + "_" + originalName.replaceAll("[^a-zA-Z0-9._-]", "_");
         Path target = uploadDir.resolve(safeName).normalize();
 
-        try (InputStream inputStream = file.getInputStream()) {
-            Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Files.createDirectories(uploadDir);
+            try (InputStream inputStream = file.getInputStream()) {
+                Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return "/uploads/" + safeName;
         } catch (IOException e) {
-            log.warn("Failed to save file locally to {}: {}", target, e.getMessage());
-            throw new RuntimeException("Failed to save file locally", e);
+            log.warn("Failed to save file locally to {}: {}. Trying fallback temp directory.", target, e.getMessage());
+            Path fallbackDir = Paths.get(System.getProperty("java.io.tmpdir"), "uploads").toAbsolutePath().normalize();
+            try {
+                Files.createDirectories(fallbackDir);
+                Path fallbackTarget = fallbackDir.resolve(safeName).normalize();
+                try (InputStream inputStream = file.getInputStream()) {
+                    Files.copy(inputStream, fallbackTarget, StandardCopyOption.REPLACE_EXISTING);
+                }
+                log.info("Saved file to fallback uploads directory: {}", fallbackTarget);
+                return "/uploads/" + fallbackTarget.getFileName();
+            } catch (IOException fallbackEx) {
+                log.error("Fallback save also failed for {}: {}", fallbackDir, fallbackEx.getMessage());
+                throw new RuntimeException("Failed to save file locally", fallbackEx);
+            }
         }
-
-        return "/uploads/" + safeName;
     }
 
     private String computeSignature(String params) {
