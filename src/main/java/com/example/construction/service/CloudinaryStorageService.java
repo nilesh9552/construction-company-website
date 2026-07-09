@@ -1,6 +1,8 @@
 package com.example.construction.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
@@ -14,7 +16,12 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Map;
@@ -22,6 +29,7 @@ import java.util.UUID;
 
 @Service
 public class CloudinaryStorageService {
+    private static final Logger log = LoggerFactory.getLogger(CloudinaryStorageService.class);
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final String uploadUrl;
@@ -29,6 +37,7 @@ public class CloudinaryStorageService {
     private final String apiSecret;
     private final String folder;
     private final boolean enabled;
+    private final Path uploadDir;
 
     public CloudinaryStorageService(
             @Value("${cloudinary.cloud-name:}") String cloudName,
@@ -42,11 +51,22 @@ public class CloudinaryStorageService {
                 ? null
                 : String.format("https://api.cloudinary.com/v1_1/%s/image/upload", cloudName);
         this.enabled = this.uploadUrl != null && !this.apiKey.isBlank() && !this.apiSecret.isBlank();
+        this.uploadDir = Paths.get("uploads").toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(this.uploadDir);
+        } catch (IOException ex) {
+            log.warn("Unable to create uploads directory {}: {}", this.uploadDir, ex.getMessage());
+        }
     }
 
     public String saveFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Please choose an image file.");
+        }
+
         if (!enabled) {
-            throw new IllegalStateException("Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET.");
+            log.warn("Cloudinary is not configured; saving file locally instead.");
+            return saveLocally(file);
         }
 
         try {
@@ -75,23 +95,43 @@ public class CloudinaryStorageService {
             ResponseEntity<String> response = restTemplate.postForEntity(uploadUrl, request, String.class);
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                throw new RuntimeException("Cloudinary upload failed with status " + response.getStatusCodeValue());
+                String responseBody = response.getBody() == null ? "[no body]" : response.getBody();
+                log.warn("Cloudinary upload failed with status {}: {}. Falling back to local storage.", response.getStatusCodeValue(), responseBody);
+                return saveLocally(file);
             }
 
             Map<String, Object> result = objectMapper.readValue(response.getBody(), Map.class);
             Object secureUrl = result.get("secure_url");
             if (secureUrl == null) {
-                throw new RuntimeException("Cloudinary response did not include secure_url");
+                log.warn("Cloudinary response did not include secure_url. Falling back to local storage.");
+                return saveLocally(file);
             }
             return secureUrl.toString();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to upload to Cloudinary", e);
+        } catch (Exception e) {
+            log.warn("Cloudinary upload failed: {}. Falling back to local storage.", e.getMessage());
+            try {
+                return saveLocally(file);
+            } catch (IOException ioException) {
+                throw new RuntimeException("Failed to upload file to Cloudinary or local storage", ioException);
+            }
         }
+    }
+
+    private String saveLocally(MultipartFile file) throws IOException {
+        String originalName = file.getOriginalFilename() == null ? "upload" : file.getOriginalFilename();
+        String safeName = UUID.randomUUID() + "_" + originalName.replaceAll("[^a-zA-Z0-9._-]", "_");
+        Path target = uploadDir.resolve(safeName).normalize();
+
+        try (InputStream inputStream = file.getInputStream()) {
+            Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        return "/uploads/" + safeName;
     }
 
     private String computeSignature(String params) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest((params + apiSecret).getBytes(StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
             for (byte b : hash) {
