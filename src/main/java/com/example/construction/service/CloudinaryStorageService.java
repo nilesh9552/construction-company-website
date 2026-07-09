@@ -109,21 +109,20 @@ public class CloudinaryStorageService {
             return secureUrl.toString();
         } catch (Exception e) {
             log.warn("Cloudinary upload failed: {}. Falling back to local storage.", e.getMessage());
-            try {
-                return saveLocally(file);
-            } catch (IOException ioException) {
-                throw new RuntimeException("Failed to upload file to Cloudinary or local storage", ioException);
-            }
+            return saveLocally(file);
         }
     }
 
-    private String saveLocally(MultipartFile file) throws IOException {
+    private String saveLocally(MultipartFile file) {
         String originalName = file.getOriginalFilename() == null ? "upload" : file.getOriginalFilename();
         String safeName = UUID.randomUUID() + "_" + originalName.replaceAll("[^a-zA-Z0-9._-]", "_");
         Path target = uploadDir.resolve(safeName).normalize();
 
         try (InputStream inputStream = file.getInputStream()) {
             Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.warn("Failed to save file locally to {}: {}", target, e.getMessage());
+            throw new RuntimeException("Failed to save file locally", e);
         }
 
         return "/uploads/" + safeName;
